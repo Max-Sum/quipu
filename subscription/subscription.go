@@ -80,7 +80,16 @@ func (s *Server) GetClashSub(c *gin.Context) {
 				c.AbortWithError(500, err)
 				return
 			}
-			sub.Proxies = append(sub.Proxies, *tiedProxy)
+			found := false
+			for _, p := range sub.Proxies {
+				if p.Name == tiedProxy.Name && p.ProxyType == tiedProxy.ProxyType {
+					found = true
+					break
+				}
+			}
+			if !found {
+				sub.Proxies = append(sub.Proxies, *tiedProxy)
+			}
 		}
 	}
 	b, err := yaml.Marshal(sub)
