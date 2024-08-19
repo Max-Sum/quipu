@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"log"
 	"net"
@@ -71,7 +70,6 @@ func (s *TCPServer) Shutdown() {
 }
 
 func (s *TCPServer) Handle(conn net.Conn) {
-	fmt.Println(conn.RemoteAddr())
 	s.trackConn(&conn, true)
 	defer func() {
 		s.trackConn(&conn, false)

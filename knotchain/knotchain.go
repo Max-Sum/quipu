@@ -102,6 +102,9 @@ func Untie(b []byte, stemHostname string) (Knot, []byte, error) {
 		w.Write(b[1:])
 		err = ErrNoKnotToUntie
 	} else {
+		// Write Hop byte
+		currHop++
+		w.Write([]byte{(currHop << 4) | totalHops})
 		// Decode the knot
 		addrtype := b[1]
 		b = b[2:]
@@ -114,6 +117,8 @@ func Untie(b []byte, stemHostname string) (Knot, []byte, error) {
 			nextKnot, err = knot.DecodeDomain(b)
 		case knot.ReferDomain:
 			nextKnot, err = knot.DecodeRefer(b, stemHostname)
+		default:
+			err = fmt.Errorf("Unknown address type")
 		}
 		if err != nil {
 			return nil, nil, err
