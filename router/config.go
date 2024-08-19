@@ -59,8 +59,6 @@ func (c *routerConf) BuildPortmap() error {
 		ceilpos, ceilrem := int(ceilu/8), byte(ceilu%8)
 		floorbits := byte(0xff) << floorrem
 		ceilbits := byte(0xff) >> (7 - ceilrem)
-		fmt.Println(floorpos, ceilpos, floorrem, ceilrem)
-		fmt.Println(floorbits, ceilbits)
 		if floorpos == ceilpos {
 			c.AllowPortmap[ceilpos] |= floorbits & ceilbits
 		} else {
@@ -85,8 +83,13 @@ func GetDefaultConf() *routerConf {
 
 func LoadAllConfsFromEnv() (*routerConf, error) {
 	cfg := GetDefaultConf()
-	_, err := env.UnmarshalFromEnviron(cfg)
-	return cfg, err
+	if _, err := env.UnmarshalFromEnviron(cfg); err != nil {
+		return nil, err
+	}
+	if err := cfg.BuildPortmap(); err != nil {
+		return nil, fmt.Errorf("failed to build port bit map, err: %v", err)
+	}
+	return cfg, nil
 }
 
 func LoadAllConfsFromIni(source interface{}) (*routerConf, error) {
