@@ -118,12 +118,15 @@ func Untie(b []byte, stemHostname string) (Knot, []byte, error) {
 		if err != nil {
 			return nil, nil, err
 		}
-		b = b[nextKnot.Length():]
-		
+
+		coded := nextKnot.Encode()
+		if len(b) > len(coded) {
+			// Write rest of knots
+			w.Write(b[len(coded):])
+		}
 		// Put the first knot to the end
-		w.Write(b)
 		w.Write([]byte{nextKnot.Type()})
-		w.Write(nextKnot.Encode())
+		w.Write(coded)
 	}
 
 	if compressed == Deflate {
