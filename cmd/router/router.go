@@ -26,12 +26,12 @@ func main() {
 	}
 
 	cfg, err := router.LoadAllConfsFromEnv()
-	if err != nil && cfgpath == nil {
+	if err != nil && len(*cfgpath) == 0 {
 		log.Fatalf("%v", err)
 		os.Exit(2)
 	}
 
-	if cfgpath != nil {
+	if len(*cfgpath) > 0 {
 		cfg, err = router.LoadAllConfsFromIni(*cfgpath)
 		if err != nil {
 			log.Fatalf("%v", err)
