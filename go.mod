@@ -1,6 +1,8 @@
 module github.com/Max-Sum/quipu
 
-go 1.19
+go 1.22.5
+
+toolchain go1.23.0
 
 require (
 	github.com/akamensky/argparse v1.4.0

@@ -1,4 +1,4 @@
-FROM golang:1.19-alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 WORKDIR /go/src/github.com/Max-Sum/quipu
 
@@ -11,32 +11,33 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 go build ./cmd/router \
- && CGO_ENABLED=0 go build ./cmd/subscription
+RUN mkdir /output \
+ && CGO_ENABLED=0 go build -o /output/ ./cmd/router \
+ && CGO_ENABLED=0 go build -o /output/ ./cmd/subscription
 
 RUN ls
 
 # Router Image
-FROM scratch as router
+FROM scratch AS router
 
 WORKDIR /
 COPY --from=builder \
-     /go/src/github.com/Max-Sum/quipu/router /router
-ENV LISTEN_PLAIN ""
-ENV LISTEN_TLS ":443"
-ENV ALLOW_REDIR "true"
-ENV ALLOW_PORTS "443"
-ENV FINAL_HTTP ""
-ENV FINAL_SOCKS ""
-ENV FINAL_TLS ""
+     /output/router /router
+ENV LISTEN_PLAIN=""
+ENV LISTEN_TLS=":443"
+ENV ALLOW_REDIR="true"
+ENV ALLOW_PORTS="443"
+ENV FINAL_HTTP=""
+ENV FINAL_SOCKS=""
+ENV FINAL_TLS=""
 ENTRYPOINT [ "/router" ]
 
 # Subscription Image
-FROM scratch as sub
+FROM scratch AS sub
 
 WORKDIR /
 COPY --from=builder \
-     /go/src/github.com/Max-Sum/fcbreak/subscription /sub
+     /output/subscription /sub
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 ENTRYPOINT [ "/sub" ]
