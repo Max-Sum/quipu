@@ -25,7 +25,7 @@ type subChainsConf struct {
 	Chains [][]string
 }
 type subtextChainsConf struct {
-	Chains []string `delim:"-" ini:"chain,allowshadow"`
+	Chains []string `delim:"-" ini:"chain,omitempty,allowshadow"`
 }
 
 func GetDefaultConf() *subConf {
@@ -86,6 +86,7 @@ func LoadAllConfsFromIni(source interface{}) (*subConf, error) {
 		InsensitiveKeys:     true,
 		IgnoreInlineComment: true,
 		AllowBooleanKeys:    false,
+		AllowShadows:        true,
 	}, source)
 	if err != nil {
 		return nil, err
