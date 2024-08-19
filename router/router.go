@@ -130,7 +130,7 @@ func (s *TCPServer) Handle(conn net.Conn) {
 			if network == "udp" {
 				network = "unixgram"
 			} else {
-				network = "unixpacket"
+				network = "unix"
 			}
 		}
 		log.Printf("Final: %s -> %s", conn.RemoteAddr(), address)
