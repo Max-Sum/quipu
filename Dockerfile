@@ -1,6 +1,6 @@
 FROM golang:1.23-alpine AS builder
 
-WORKDIR /go/src/github.com/Max-Sum/quipa
+WORKDIR /go/src/github.com/Max-Sum/quipu
 
 ARG GOPROXY=https://goproxy.io,direct
 
@@ -21,7 +21,7 @@ FROM scratch as router
 
 WORKDIR /
 COPY --from=builder \
-     /go/src/github.com/Max-Sum/quipa/router /router
+     /go/src/github.com/Max-Sum/quipu/router /router
 ENV LISTEN_PLAIN ""
 ENV LISTEN_TLS ":443"
 ENV ALLOW_REDIR "true"
