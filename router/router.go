@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -72,8 +73,10 @@ func (s *TCPServer) Shutdown() {
 func (s *TCPServer) Handle(conn net.Conn) {
 	s.trackConn(&conn, true)
 	defer func() {
-		s.trackConn(&conn, false)
-		conn.Close()
+		if conn != nil {
+			s.trackConn(&conn, false)
+			conn.Close()
+		}
 	}()
 	br := bufio.NewReader(conn)
 
@@ -99,7 +102,7 @@ func (s *TCPServer) Handle(conn net.Conn) {
 		return
 	}
 
-	conn = &wrappedConn{br: br, Conn: conn, prepend: readahead}
+	wconn := &wrappedConn{br: br, Conn: conn, prepend: readahead}
 
 	if nextKnot == nil {
 		// Reached end of chain
@@ -139,8 +142,17 @@ func (s *TCPServer) Handle(conn net.Conn) {
 				conn.RemoteAddr(), conn.LocalAddr(), address, err)
 			return
 		}
-		defer rconn.Close()
-		transport(conn, rconn)
+		if rconn == nil {
+			log.Printf("[handle] Failed to relay %s -> %s -> %s : rconn is nil",
+				conn.RemoteAddr(), conn.LocalAddr(), address)
+			return
+		}
+		defer func() {
+			if rconn != nil {
+				rconn.Close()
+			}
+		}()
+		transport(wconn, rconn)
 		return
 	}
 
@@ -165,8 +177,13 @@ func (s *TCPServer) Handle(conn net.Conn) {
 			conn.RemoteAddr(), conn.LocalAddr(), knotchain.KnotString(nextKnot), err)
 		return
 	}
-	defer rconn.Close()
-	transport(conn, rconn)
+
+	defer func() {
+		if rconn != nil {
+			rconn.Close()
+		}
+	}()
+	transport(wconn, rconn)
 }
 
 func (s *TCPServer) trackConn(conn *net.Conn, add bool) {
@@ -314,6 +331,12 @@ func (c *wrappedConn) Read(b []byte) (int, error) {
 }
 
 func transport(rw1, rw2 io.ReadWriter) error {
+	if rw1 == nil {
+		return fmt.Errorf("transport: rw1 is nil")
+	}
+	if rw2 == nil {
+		return fmt.Errorf("transport: rw2 is nil")
+	}
 	errc := make(chan error, 1)
 	go func() {
 		errc <- copyBuffer(rw1, rw2)
@@ -333,6 +356,7 @@ func transport(rw1, rw2 io.ReadWriter) error {
 func copyBuffer(dst io.Writer, src io.Reader) error {
 	buf := bufferPool.Get().([]byte)
 	defer bufferPool.Put(buf)
+
 
 	_, err := io.CopyBuffer(dst, src, buf)
 	return err
