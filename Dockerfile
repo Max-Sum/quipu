@@ -25,6 +25,7 @@ COPY --from=builder \
      /output/router /router
 ENV LISTEN_PLAIN=""
 ENV LISTEN_TLS=":443"
+ENV ALL_PROXY=""
 ENV ALLOW_REDIR="true"
 ENV ALLOW_PORTS="0-65535"
 ENV FINAL_HTTP=""

@@ -7,7 +7,15 @@ import (
 	"net"
 	"strconv"
 	"strings"
+
+	"golang.org/x/net/proxy"
+	"github.com/wrouesnel/go.connect-proxy-scheme"
 )
+
+func init() {
+	proxy.RegisterDialerType("http", connect_proxy_scheme.ConnectProxy)
+	proxy.RegisterDialerType("https", connect_proxy_scheme.ConnectProxy)
+}
 
 const (
 	DomainName byte = 0x03
@@ -58,14 +66,13 @@ func (d *Domain) Length() int {
 }
 
 func (d *Domain) DialContext(ctx context.Context, network string) (net.Conn, error) {
-	dialer := &net.Dialer{}
 	portStr := strconv.FormatUint(uint64(d.Port()), 10)
 	// Resolved
 	if d.ips != nil {
 		var err error
 		var conn net.Conn
 		for _, ip := range d.ips {
-			conn, err = dialer.DialContext(ctx, network, net.JoinHostPort(ip.String(), portStr))
+			conn, err = proxy.Dial(ctx, network, net.JoinHostPort(ip.String(), portStr))
 			if err != nil {
 				return conn, nil
 			}
@@ -74,7 +81,7 @@ func (d *Domain) DialContext(ctx context.Context, network string) (net.Conn, err
 			return nil, err
 		}
 	}
-	return dialer.DialContext(ctx, network, net.JoinHostPort(d.Addr, portStr))
+	return proxy.Dial(ctx, network, net.JoinHostPort(d.Addr, portStr))
 }
 
 func DecodeDomain(b []byte) (*Domain, error) {

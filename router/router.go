@@ -12,11 +12,19 @@ import (
 	"strings"
 	"sync"
 
+	"golang.org/x/net/proxy"
+	"github.com/wrouesnel/go.connect-proxy-scheme"
+
 	"github.com/Max-Sum/quipu/knotchain"
 	"github.com/ginuerzh/gosocks4"
 	"github.com/ginuerzh/gosocks5"
 	dissector "github.com/go-gost/tls-dissector"
 )
+
+func init() {
+	proxy.RegisterDialerType("http", connect_proxy_scheme.ConnectProxy)
+	proxy.RegisterDialerType("https", connect_proxy_scheme.ConnectProxy)
+}
 
 var bufferPool = sync.Pool{
 	New: func() interface{} {
@@ -135,8 +143,7 @@ func (s *TCPServer) Handle(conn net.Conn) {
 			}
 		}
 		log.Printf("Final: %s -> %s", conn.RemoteAddr(), address)
-		dialer := net.Dialer{}
-		rconn, err := dialer.DialContext(s.ctx, network, address)
+		rconn, err := proxy.Dial(s.ctx, network, address)
 		if err != nil {
 			log.Printf("[handle] Failed to relay %s -> %s -> %s : %s",
 				conn.RemoteAddr(), conn.LocalAddr(), address, err)

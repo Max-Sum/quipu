@@ -6,7 +6,15 @@ import (
 	"errors"
 	"net"
 	"strconv"
+
+	"golang.org/x/net/proxy"
+	"github.com/wrouesnel/go.connect-proxy-scheme"
 )
+
+func init() {
+	proxy.RegisterDialerType("http", connect_proxy_scheme.ConnectProxy)
+	proxy.RegisterDialerType("https", connect_proxy_scheme.ConnectProxy)
+}
 
 const (
 	IPv4 byte = 0x01
@@ -58,8 +66,7 @@ func (ip *IP) Length() int {
 }
 
 func (ip *IP) DialContext(ctx context.Context, network string) (net.Conn, error) {
-	dialer := &net.Dialer{}
-	return dialer.DialContext(ctx, network, ip.String())
+	return proxy.Dial(ctx, network, ip.String())
 }
 
 func DecodeIPv4(b []byte) (*IP, error) {
