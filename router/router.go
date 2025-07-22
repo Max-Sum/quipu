@@ -143,7 +143,13 @@ func (s *TCPServer) Handle(conn net.Conn) {
 			}
 		}
 		log.Printf("Final: %s -> %s", conn.RemoteAddr(), address)
-		rconn, err := proxy.Dial(s.ctx, network, address)
+		var rconn net.Conn
+		if network == "tcp" {
+			rconn, err = proxy.Dial(s.ctx, network, address)
+		} else {
+			dialer := &net.Dialer{}
+			rconn, err = dialer.DialContext(s.ctx, network, address)
+		}
 		if err != nil {
 			log.Printf("[handle] Failed to relay %s -> %s -> %s : %s",
 				conn.RemoteAddr(), conn.LocalAddr(), address, err)

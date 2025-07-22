@@ -72,7 +72,12 @@ func (d *Domain) DialContext(ctx context.Context, network string) (net.Conn, err
 		var err error
 		var conn net.Conn
 		for _, ip := range d.ips {
-			conn, err = proxy.Dial(ctx, network, net.JoinHostPort(ip.String(), portStr))
+			if network == "tcp" {
+				conn, err = proxy.Dial(ctx, network, net.JoinHostPort(ip.String(), portStr))
+			} else {
+				dialer := &net.Dialer{}
+				conn, err = dialer.DialContext(ctx, network, net.JoinHostPort(ip.String(), portStr))
+			}
 			if err != nil {
 				return conn, nil
 			}
@@ -81,7 +86,12 @@ func (d *Domain) DialContext(ctx context.Context, network string) (net.Conn, err
 			return nil, err
 		}
 	}
-	return proxy.Dial(ctx, network, net.JoinHostPort(d.Addr, portStr))
+
+	if network == "tcp" {
+		return proxy.Dial(ctx, network, net.JoinHostPort(d.Addr, portStr))
+	}
+	dialer := &net.Dialer{}
+	return dialer.DialContext(ctx, network, net.JoinHostPort(d.Addr, portStr))
 }
 
 func DecodeDomain(b []byte) (*Domain, error) {

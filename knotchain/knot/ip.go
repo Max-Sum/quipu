@@ -66,7 +66,12 @@ func (ip *IP) Length() int {
 }
 
 func (ip *IP) DialContext(ctx context.Context, network string) (net.Conn, error) {
-	return proxy.Dial(ctx, network, ip.String())
+	if network == "tcp" {
+		return proxy.Dial(ctx, network, ip.String())
+	} else {
+		dialer := &net.Dialer{}
+		return dialer.DialContext(ctx, network, ip.String())
+	}
 }
 
 func DecodeIPv4(b []byte) (*IP, error) {
